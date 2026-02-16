@@ -1,0 +1,212 @@
+/* =========================
+   Dashboard Layout
+========================= */
+
+.dashboard-main {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: auto;
+  color: var(--text-color);
+}
+
+.dashboard-main h1 {
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+}
+
+section {
+  margin-top: 2.5rem;
+}
+
+/* =========================
+   Overview Cards
+========================= */
+
+.overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.dcard {
+  background: var(--nav-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dcard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+}
+
+.dcard h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.85;
+}
+
+.dcard p {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+/* =========================
+   Progress Section
+========================= */
+
+.progress-section h2 {
+  margin-bottom: 1rem;
+}
+
+.progress-bar-container {
+  display: grid;
+  grid-template-columns: 150px 1fr 50px;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.progress-bar {
+  background: var(--phish-detail-list-bg);
+  border-radius: 20px;
+  overflow: hidden;
+  height: 12px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--accent),
+    var(--accent-hover)
+  );
+  border-radius: 20px;
+  transition: width 0.4s ease;
+}
+
+/* =========================
+   Recent Labs
+========================= */
+
+.recent-labs ul {
+  list-style: none;
+  padding: 0;
+}
+
+.lab-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--nav-bg);
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.lab-result.correct {
+  border-left: 5px solid var(--accent);
+}
+
+.result-badge {
+  background: var(--accent);
+  color: #fff;
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+
+/* =========================
+   Quick Actions
+========================= */
+
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.quick-actions button {
+  padding: 0.8rem 1.3rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  background: var(--accent);
+  color: white;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.quick-actions button:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+/* Certificate button states */
+
+.cert-btn.locked {
+  background: #cfc8ff;
+  cursor: not-allowed;
+}
+
+.cert-btn.active {
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    var(--accent-hover)
+  );
+}
+
+/* =========================
+   Popups (Success / Lock)
+========================= */
+
+.success-popup,
+.lock-popup {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.4rem;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 500;
+  z-index: 1000;
+  animation: slideIn 0.3s ease;
+}
+
+.success-popup {
+  background: #6f5cff;
+}
+
+.lock-popup {
+  background: #ff6b6b;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* =========================
+   Certificate Modal
+========================= */
+
+.certificate-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 1rem;
+}

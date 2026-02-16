@@ -1,0 +1,102 @@
+/* Page container */
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  color: var(--text-color);
+}
+
+/* Page title */
+.title {
+  font-size: 2.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  color:var(--accent); /* lavender */
+}
+
+/* Main description */
+.description {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--text-color);
+  margin-bottom: 3rem;
+}
+.back-button{
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+/* Section headings */
+.sectionTitle {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  color:var(--accent);
+  border-left: 4px solid #c4b5fd;
+  padding-left: 0.75rem;
+}
+
+/* Lists */
+.list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 3rem;
+}
+
+.listItem {
+  background:var(--phish-detail-list-bg);
+  border: 1px solid var(--phish-detail-list-bg);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.listItem:hover {
+  background:var(--phish-detail-list-bg-hovered);
+  transform: translateX(4px);
+}
+
+/* Back link */
+.container > a {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.container > a:hover {
+  color: var(--phish-detail-list-bg)
+}
+
+/* Quiz CTA button */
+.quiz-button {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.75rem 1.75rem;
+  background: linear-gradient(135deg, var(--button-bg-2), var(--accent));
+  color: var(--text-color);
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.quiz-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+}
+
+/* Footer CTA section */
+footer {
+  border: 1px solid var(--accent);
+  margin-top: 4rem;
+  text-align: center;
+  padding: 2rem;
+  background: var(--phish-detail-list-bg);
+  border-radius: 12px;
+}
