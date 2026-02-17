@@ -13,7 +13,9 @@ export const protect = async (req, res, next) => {
       res.status(401).json({ message: "Not authorized" });
     }
   }
-  if (!token) res.status(401).json({ message: "No token" });
+  if (!token){
+  return res.status(401).json({ message: "No token" });
+  }
 };
 
 export const adminOnly = (req, res, next) => {

@@ -1,152 +1,139 @@
-import { useState } from "react";
-import {useScore} from "../../context/ScoreContext";
-import { set } from "mongoose";
+import { useState, useEffect } from "react";
+import { useScore } from "../../context/ScoreContext";
 
 const KnowledgeQuiz = ({ goBack }) => {
   const { updateStats } = useScore();
-  const questions = [
-    {
-      question: "What is phishing?",
-      options: [
-        "A secure communication protocol",
-        "A cyberattack that tricks users into revealing sensitive information",
-        "A type of malware scanner"
-      ],
-      correct: 1,
-      explanation:
-        "Phishing is a social engineering attack where attackers trick users into giving up sensitive information like passwords or credit card details."
-    },
-    {
-      question: "Which of the following is a common phishing sign?",
-      options: [
-        "Emails addressed to you by full name",
-        "Urgent messages demanding immediate action",
-        "Messages sent only through secure portals"
-      ],
-      correct: 1,
-      explanation:
-        "Phishing messages often create urgency to pressure victims into acting without thinking."
-    },
-    {
-      question: "What is the safest action when receiving a suspicious email?",
-      options: [
-        "Click the link to verify the sender",
-        "Reply to ask if it is legitimate",
-        "Report it and delete the email"
-      ],
-      correct: 2,
-      explanation:
-        "You should never interact with suspicious emails. Report them through official channels and delete them."
-    }
-  ];
-
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState(null);
-  const [score, setScore] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [score, setScore] = useState(0);
+  const API_URL ="http://localhost:5000";
 
-  const handleOptionClick = (index) => {
+  // Fetch questions from backend on mount
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_URL}/api/quiz/knowledge`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setQuestions(data);
+      } catch (err) {
+        console.error("Failed to fetch questions:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+
+  const handleOptionClick = async (index) => {
     if (showFeedback) return;
 
     setSelected(index);
     setShowFeedback(true);
 
-    if (index === questions[current].correct) {
-      setScore((prev) => prev + 1);
+    // Submit answer to backend
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/api/quiz/submit`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          questionId: questions[current]._id,
+          selectedAnswer: questions[current].options[index],
+        }),
+      });
+      const data = await res.json();
+      if (data.correct) setScore((prev) => prev + 1);
+    } catch (err) {
+      console.error("Failed to submit answer:", err);
     }
   };
 
   const nextQuestion = () => {
     if (current === questions.length - 1) {
       handleFinishQuiz();
-    }else{
+    } else {
       setSelected(null);
       setShowFeedback(false);
       setCurrent((prev) => prev + 1);
     }
   };
 
-  const restartQuiz = () => {
-    setCurrent(0);
-    setSelected(null);
-    setShowFeedback(false);
-    setScore(0);
-  };  
-
   const handleFinishQuiz = () => {
     const finalPercentage = (score / questions.length) * 100;
     updateStats(finalPercentage, "knowledge");
-    setCurrent(current+1);
-  }
+    setCurrent(current + 1);
+  };
+
+  if (loading) return <p>Loading questions...</p>;
+
+  if (current >= questions.length)
+    return (
+      <div className="quiz-result">
+        <h2>Quiz Completed 🎉</h2>
+        <p>
+          You scored <strong>{score}</strong> out of <strong>{questions.length}</strong>
+        </p>
+        <button
+          onClick={() => {
+            setCurrent(0);
+            setScore(0);
+            setSelected(null);
+            setShowFeedback(false);
+          }}
+        >
+          Restart Quiz
+        </button>
+      </div>
+    );
 
   const progress = ((current + 1) / questions.length) * 100;
+  const q = questions[current];
 
   return (
     <div className="quiz-card">
-      <button className="back-btn" onClick={goBack}>
-        ← Back
-      </button>
+      <button className="back-btn" onClick={goBack}>← Back</button>
 
-      {current < questions.length ? (
-        <>
-          {/* Progress */}
-          <div className="quiz-progress-wrapper">
-            <div
-              className="quiz-progress-bar"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+      <div className="quiz-progress-wrapper">
+        <div className="quiz-progress-bar" style={{ width: `${progress}%` }} />
+      </div>
 
-          <p className="question-count">
-            Question {current + 1} of {questions.length}
-          </p>
+      <p className="question-count">
+        Question {current + 1} of {questions.length}
+      </p>
 
-          <h2>{questions[current].question}</h2>
+      <h2>{q.questionText}</h2>
 
-          <div className="options">
-            {questions[current].options.map((option, index) => {
-              let className = "option-btn";
+      <div className="options">
+        {q.options.map((option, idx) => {
+          let className = "option-btn";
+          if (showFeedback) {
+            if (option === q.correctAnswer) className += " correct";
+            else if (idx === selected) className += " wrong";
+          }
+          return (
+            <button key={idx} className={className} onClick={() => handleOptionClick(idx)}>
+              {option}
+            </button>
+          );
+        })}
+      </div>
 
-              if (showFeedback) {
-                if (index === questions[current].correct) {
-                  className += " correct";
-                } else if (index === selected) {
-                  className += " wrong";
-                }
-              }
-
-              return (
-                <button
-                  key={index}
-                  className={className}
-                  onClick={() => handleOptionClick(index)}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-
-          {showFeedback && (
-            <div className="feedback">
-              <p>{questions[current].explanation}</p>
-              <button className="next-btn" onClick={nextQuestion}>
-                {current === questions.length - 1
-                  ? "Finish Quiz"
-                  : "Next Question →"}
-              </button>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="quiz-result">
-          <h2>Quiz Completed 🎉</h2>
-          <p>
-            You scored <strong>{score}</strong> out of{" "}
-            <strong>{questions.length}</strong>
-          </p>
-
-          <button onClick={restartQuiz}>Restart Quiz</button>
+      {showFeedback && (
+        <div className="feedback">
+          <p>{q.explanation}</p>
+          <button className="next-btn" onClick={nextQuestion}>
+            {current === questions.length - 1 ? "Finish Quiz" : "Next Question →"}
+          </button>
         </div>
       )}
     </div>

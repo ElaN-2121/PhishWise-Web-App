@@ -1,50 +1,60 @@
-import { useState } from "react";
-import {useScore} from "../../context/ScoreContext";
+import { useState, useEffect } from "react";
+import { useScore } from "../../context/ScoreContext";
 
 const RealWorldQuiz = ({ goBack }) => {
-  const cases = [
-    {
-      title: "COVID-19 WHO Scam (2020)",
-      scenario:
-        "You receive an email claiming to be from the World Health Organization. It urges you to download a document with important COVID-19 safety guidelines.",
-      options: ["Spear phishing", "Email phishing", "Clone phishing"],
-      correct: 1,
-      explanation:
-        "Attackers widely sent fake WHO emails during the COVID-19 pandemic. This is a classic example of mass email phishing.",
-    },
-    {
-      title: "CEO Fraud Attack",
-      scenario:
-        "An employee receives an email that appears to come from the company CEO asking for an urgent wire transfer.",
-      options: ["Smishing", "Spear phishing", "Vishing"],
-      correct: 1,
-      explanation:
-        "This attack targets a specific individual and impersonates a trusted authority, making it spear phishing.",
-    },
-    {
-      title: "Bank SMS Alert",
-      scenario:
-        "You receive an SMS saying your bank account has been locked and asks you to click a link to restore access.",
-      options: ["Smishing", "Vishing", "Clone phishing"],
-      correct: 0,
-      explanation:
-        "Phishing conducted through SMS messages is known as smishing.",
-    },
-  ];
-
+  const { updateStats } = useScore();
+  const [cases, setCases] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState(null);
-  const [score, setScore] = useState(0);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [score, setScore] = useState(0);
+  const API_URL  = "http://localhost:5000";
 
-  const handleOptionClick = (index) => {
+  // Fetch real-world cases from backend
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_URL}/api/quiz/realworld`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setCases(data);
+      } catch (err) {
+        console.error("Failed to fetch real-world cases:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCases();
+  }, []);
+
+  const handleOptionClick = async (index) => {
     if (showFeedback) return;
 
     setSelected(index);
     setShowFeedback(true);
 
-    if (index === cases[current].correct) {
-      setScore((prev) => prev + 1);
+    // Submit answer to backend
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_URL}/api/quiz/submit`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          questionId: cases[current]._id,
+          selectedAnswer: cases[current].options[index],
+        }),
+      });
+      const data = await res.json();
+      if (data.correct) setScore((prev) => prev + 1);
+    } catch (err) {
+      console.error("Failed to submit answer:", err);
     }
   };
 
@@ -58,6 +68,12 @@ const RealWorldQuiz = ({ goBack }) => {
     }
   };
 
+  const handleFinishQuiz = () => {
+    const finalPercentage = (score / cases.length) * 100;
+    updateStats(finalPercentage, "realWorld");
+    setCurrent(current + 1);
+  };
+
   const restartQuiz = () => {
     setCurrent(0);
     setSelected(null);
@@ -65,82 +81,61 @@ const RealWorldQuiz = ({ goBack }) => {
     setScore(0);
   };
 
-  const { updateStats } = useScore();
-  const handleFinishQuiz = () => {
-    const finalPercentage = (score / cases.length) * 100;
-    updateStats(finalPercentage, "realWorld");
-    setCurrent(current + 1);
-  }
+  if (loading) return <p>Loading real-world cases...</p>;
+
+  if (current >= cases.length)
+    return (
+      <div className="quiz-result">
+        <h2>Cases Completed 🎯</h2>
+        <p>
+          You correctly identified <strong>{score}</strong> out of <strong>{cases.length}</strong> phishing cases.
+        </p>
+        <button onClick={restartQuiz}>Retry Cases</button>
+      </div>
+    );
 
   const progress = ((current + 1) / cases.length) * 100;
+  const c = cases[current];
 
   return (
     <div className="quiz-card">
-      <button className="back-btn" onClick={goBack}>
-        ← Back
-      </button>
+      <button className="back-btn" onClick={goBack}>← Back</button>
 
-      {current < cases.length ? (
-        <>
-          {/* Progress */}
-          <div className="progress-wrapper">
-            <div className="progress-bar" style={{ width: `${progress}%` }} />
-          </div>
+      <div className="progress-wrapper">
+        <div className="progress-bar" style={{ width: `${progress}%` }} />
+      </div>
 
-          <p className="question-count">
-            Case {current + 1} of {cases.length}
-          </p>
+      <p className="question-count">
+        Case {current + 1} of {cases.length}
+      </p>
 
-          <h2>{cases[current].title}</h2>
+      <h2>{c.title}</h2>
+      <div className="scenario-box">
+        <p>{c.scenario}</p>
+      </div>
 
-          <div className="scenario-box">
-            <p>{cases[current].scenario}</p>
-          </div>
+      <h3>What type of phishing is this?</h3>
+      <div className="options">
+        {c.options.map((option, idx) => {
+          let className = "option-btn";
+          if (showFeedback) {
+            if (option === c.correctAnswer) className += " correct";
+            else if (idx === selected) className += " wrong";
+          }
+          return (
+            <button key={idx} className={className} onClick={() => handleOptionClick(idx)}>
+              {option}
+            </button>
+          );
+        })}
+      </div>
 
-          <h3>What type of phishing is this?</h3>
-
-          <div className="options">
-            {cases[current].options.map((option, index) => {
-              let className = "option-btn";
-
-              if (showFeedback) {
-                if (index === cases[current].correct) {
-                  className += " correct";
-                } else if (index === selected) {
-                  className += " wrong";
-                }
-              }
-
-              return (
-                <button
-                  key={index}
-                  className={className}
-                  onClick={() => handleOptionClick(index)}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
-
-          {showFeedback && (
-            <div className="feedback">
-              <p>{cases[current].explanation}</p>
-              <button className="next-btn" onClick={nextCase}>
-                {current === cases.length - 1 ? "Finish Cases" : "Next Case →"}
-              </button>
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="quiz-result">
-          <h2>Cases Completed 🎯</h2>
-          <p>
-            You correctly identified <strong>{score}</strong> out of{" "}
-            <strong>{cases.length}</strong> phishing cases.
-          </p>
-
-          <button onClick={restartQuiz}>Retry Cases</button>
+      {showFeedback && (
+        <div className="feedback">
+          <p>{c.explanation}</p>
+          <button className="next-btn" onClick={nextCase}>
+            {current === cases.length - 1 ? "Finish Cases" : "Next Case →"}
+          </button>
         </div>
       )}
     </div>

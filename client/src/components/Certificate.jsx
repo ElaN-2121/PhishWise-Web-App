@@ -1,66 +1,63 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import html2pdf from "html2pdf.js";
+import Logo from "../../public/logo.png";
 import "../styles/certificate.css";
 
-const Certificate = ({ level = "Intermediate" }) => {
-  const [name, setName] = useState("");
+const Certificate = () => {
+  const [certificate, setCertificate] = useState(null);
+
+  useEffect(() => {
+    const fetchCertificate = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/certificate`, {
+          method: "POST", // or GET if verifying
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setCertificate(data.certificate);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchCertificate();
+  }, []);
 
   const handleDownload = () => {
     const element = document.getElementById("certificate-preview");
     html2pdf()
       .set({
         margin: 0.5,
-        filename: `Phishing-Certificate-${name}.pdf`,
+        filename: `Phishing-Certificate-${certificate.user.name}.pdf`,
         html2canvas: { scale: 2 },
       })
       .from(element)
       .save();
   };
 
+  if (!certificate) return <p>Loading certificate...</p>;
+
   return (
     <div className="certificate-page">
-      <h2>🎓 Generate Your Certificate</h2>
-
-      {/* Input Section */}
-      <div className="certificate-form">
-        <input
-          type="text"
-          placeholder="Enter your full name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <button disabled={!name.trim()} onClick={handleDownload}>
-          📄 Download Certificate
-        </button>
-      </div>
-
-      {/* Certificate Preview */}
+      <h2>🎓 Your Certificate</h2>
       <div id="certificate-preview" className="certificate-card">
-        {/* Decorative Ethiopian corner flags */}
         <div className="flag top-left"></div>
         <div className="flag top-right"></div>
-
         <div className="certificate-border">
-          {/* Optional Logo */}
-          <img
-            src="../../public/logo.png"
-            alt="Logo"
-            className="certificate-logo"
-          />
-
+          <img src={Logo} alt="Logo" className="certificate-logo" />
           <h1>Certificate of Completion</h1>
-          <p className="certifies">This certifies that</p>
-          <h2>{name || "Your Name"}</h2>
-          <p className="description">
+          <p>This certifies that</p>
+          <h2>{certificate.user.name}</h2>
+          <p>
             has successfully completed the <strong>Phishing Awareness Training</strong>
           </p>
-          <p className="level">Level Achieved: <strong>{level}</strong></p>
-          <p className="date">{new Date().toLocaleDateString()}</p>
-          <p className="issuer">
-            Issued by: Phishing Awareness Platform – Ethiopia
-          </p>
+          <p>Level Achieved: <strong>{certificate.level}</strong></p>
+          <p>Issued on: {new Date(certificate.issuedAt).toLocaleDateString()}</p>
+          <p>Certificate ID: {certificate.certificateId}</p>
         </div>
       </div>
+      <button onClick={handleDownload}>📄 Download Certificate</button>
     </div>
   );
 };

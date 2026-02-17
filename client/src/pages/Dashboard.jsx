@@ -3,49 +3,43 @@ import Certificate from "../components/Certificate";
 import "../styles/dashboard.css";
 import { useScore } from "../context/ScoreContext";
 
-const TOTAL_QUIZZES = 3;
-const TOTAL_LABS = 3;
-
-const Dashboard = () => {
+const Dashboard = ({ startQuiz }) => {
   const { stats } = useScore();
   const [showCertificate, setShowCertificate] = useState(false);
 
-  // States for notifications
-  const [notification, setNotification] = useState(""); // For success
-  const [lockMessage, setLockMessage] = useState(""); // For locked state
+  // Popups
+  const [notification, setNotification] = useState("");
+  const [lockMessage, setLockMessage] = useState("");
 
   const progressData = [
     {
       type: "Knowledge Quiz",
-      // Use the actual score percentage sent from the quiz
-      progress: stats.knowledgeCompleted > 0 ? stats.totalScore : 0,
+      progress: stats.percentages.knowledge || 0,
     },
     {
       type: "Real-World Quiz",
-      progress: stats.realWorldCompleted > 0 ? stats.totalScore : 0,
+      progress: stats.percentages.realWorld || 0,
     },
     {
       type: "Phishing Lab",
-      // Keep Labs as completion-based since they are pass/fail
-      progress: Math.round((stats.labsCompleted / TOTAL_LABS) * 100),
+      progress: stats.percentages.lab || 0,
     },
   ];
 
-  // Logic: Must have completed at least 1 of each quiz type and all labs with 100% avg
-  const allCorrect =
-    stats.knowledgeCompleted >= 1 &&
-    stats.realWorldCompleted >= 1 &&
-    stats.labsCompleted === TOTAL_LABS &&
-    stats.totalScore === 100;
+  // Certificate eligibility: ≥80% for each quiz type
+  const eligibleForCertificate =
+    stats.percentages.knowledge >= 80 &&
+    stats.percentages.realWorld >= 80 &&
+    stats.percentages.lab >= 80;
 
   const handleCertClick = () => {
-    if (allCorrect) {
+    if (eligibleForCertificate) {
       setNotification("Certificate Generated Successfully! 🎉");
       setShowCertificate(true);
       setTimeout(() => setNotification(""), 3000);
     } else {
       setLockMessage(
-        "🔒 Locked: Complete all sections with 100% to unlock your certificate!",
+        "🔒 Locked: Complete all sections with ≥80% to unlock your certificate!"
       );
       setTimeout(() => setLockMessage(""), 3500);
     }
@@ -53,7 +47,6 @@ const Dashboard = () => {
 
   return (
     <main className="dashboard-main">
-      {/* Popups */}
       {notification && <div className="success-popup">{notification}</div>}
       {lockMessage && <div className="lock-popup">{lockMessage}</div>}
 
@@ -87,35 +80,20 @@ const Dashboard = () => {
               <div
                 className="progress-bar-fill"
                 style={{ width: `${item.progress}%` }}
-              ></div>
+              />
             </div>
             <span>{item.progress}%</span>
           </div>
         ))}
       </section>
 
-      <section className="recent-labs">
-        <h2>Recent Lab Attempts</h2>
-        <ul>
-          {stats.labsCompleted > 0 ? (
-            <li className="lab-result correct">
-              <span>Latest Phishing Lab</span>
-              <span className="result-badge">Completed</span>
-            </li>
-          ) : (
-            <li>No labs completed yet.</li>
-          )}
-        </ul>
-      </section>
-
       <section className="quick-actions">
         <h2>Quick Actions</h2>
-        <button>🧠 Start Knowledge Quiz</button>
-        <button>🧪 Open Phishing Lab</button>
-
-        {/* Removed 'disabled' so we can capture clicks for the popup */}
+        <button onClick={() => startQuiz("knowledge")}>🧠 Start Knowledge Quiz</button>
+        <button onClick={() => startQuiz("real")}>🌍 Start Real-World Quiz</button>
+        <button onClick={() => startQuiz("lab")}>🧪 Open Phishing Lab</button>
         <button
-          className={`cert-btn ${allCorrect ? "active" : "locked"}`}
+          className={`cert-btn ${eligibleForCertificate ? "active" : "locked"}`}
           onClick={handleCertClick}
         >
           🎓 Generate Certificate

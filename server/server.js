@@ -15,7 +15,18 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || origin.startsWith("http://localhost")) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
+
+
 app.use(express.json());
 app.use(helmet());
 
@@ -28,6 +39,12 @@ app.use("/api/certificate", certificateRoutes);
 app.get("/", (req, res) => {
   res.send("PhishWise API running...")
 });
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong" });
+});
+
 
 const PORT = process.env.PORT || 5000;
 

@@ -7,30 +7,41 @@ export const ScoreProvider = ({ children }) => {
     knowledgeCompleted: 0,
     realWorldCompleted: 0,
     labsCompleted: 0,
-    totalScore: 0,
+    totalScore: 0, // cumulative points
     level: "Beginner",
+    percentages: {
+      knowledge: 0,
+      realWorld: 0,
+      lab: 0,
+    },
   });
 
   const updateStats = (score, type) => {
     setStats((prev) => {
       const newStats = { ...prev };
 
+      // Increment completed quizzes for this type
       if (type === "knowledge") newStats.knowledgeCompleted += 1;
       else if (type === "realWorld") newStats.realWorldCompleted += 1;
       else if (type === "lab") newStats.labsCompleted += 1;
 
-      newStats.totalScore = score;
+      // Update cumulative total score
+      newStats.totalScore += score;
 
-      const totalFinished =
+      // Track latest percentage for each quiz type
+      newStats.percentages[type] = score;
+
+      // Determine level
+      const totalQuizzesCompleted =
         newStats.knowledgeCompleted +
         newStats.realWorldCompleted +
         newStats.labsCompleted;
 
-      if (totalFinished > 10) newStats.level = "Advanced";
-      else if (totalFinished > 5) newStats.level = "Intermediate";
+      if (newStats.totalScore / totalQuizzesCompleted >= 90) newStats.level = "Expert";
+      else if (newStats.totalScore / totalQuizzesCompleted >= 70) newStats.level = "Intermediate";
       else newStats.level = "Beginner";
 
-      return newStats; // Only one return here
+      return newStats;
     });
   };
 
